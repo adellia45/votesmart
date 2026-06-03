@@ -302,17 +302,50 @@ class ApiService {
     }
   }
 
-  // ==================== RESET VOTING (ADMIN) ====================
+  // Mengambil status pengumuman (Dipakai User & Admin)
+  static Future<String> getStatusPengumuman() async {
+    try {
+      final response = await http.get(Uri.parse('${ApiConfig.baseUrl}/status_pengumuman.php'));
+      final data = jsonDecode(response.body);
+      return data['status'] ?? 'hidden'; // mengembalikan 'visible' atau 'hidden'
+    } catch (e) {
+      return 'hidden';
+    }
+  }
+
+  // Mengubah status pengumuman (Dipakai Admin)
+  static Future<bool> updateStatusPengumuman(String status) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${ApiConfig.baseUrl}/status_pengumuman.php'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'status': status}),
+      );
+      final data = jsonDecode(response.body);
+      return data['success'] == true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+// ==================== RESET VOTING (ADMIN) ====================
   
   static Future<bool> resetVoting(String kategori) async {
     try {
       final response = await http.post(
         Uri.parse('${ApiConfig.baseUrl}/reset_voting.php'),
+        headers: {
+          'Content-Type': 'application/json', // 👈 WAJIB DITAMBAHKAN BIAR PHP BISA MEMBACA BODY JSON
+        },
         body: jsonEncode({'kategori': kategori}),
       );
+      
+      print("📥 RESET VOTING RESPONSE: ${response.body}"); // Tambahkan log untuk mempermudah debugging
+      
       final data = jsonDecode(response.body);
       return data['success'] == true;
     } catch (e) {
+      print("❌ RESET VOTING ERROR: $e");
       return false;
     }
   }

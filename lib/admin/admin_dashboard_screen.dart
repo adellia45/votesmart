@@ -6,16 +6,43 @@ import 'admin_data_pemilih_screen.dart';
 import 'admin_hasil_voting_screen.dart';
 import 'admin_reset_voting_screen.dart';
 import '../../screens/home_screen.dart';
+import '../../services/api_service.dart'; // <- Ditambahkan untuk koneksi ke database
 
-class AdminDashboardPage extends StatelessWidget {
+class AdminDashboardPage extends StatefulWidget { // <- Diubah ke StatefulWidget
   const AdminDashboardPage({super.key});
+
+  @override
+  State<AdminDashboardPage> createState() => _AdminDashboardPageState();
+}
+
+class _AdminDashboardPageState extends State<AdminDashboardPage> {
+  // State untuk menampung status dari database
+  String _statusPengumuman = 'hidden';
+  bool _isLoadingStatus = true;
+
+  @override
+  void initState() {
+    super.initState();
+    // Cek status ke database saat halaman pertama kali dibuka
+    _cekStatusPengumuman();
+  }
+
+  Future<void> _cekStatusPengumuman() async {
+    final status = await ApiService.getStatusPengumuman();
+    if (mounted) {
+      setState(() {
+        _statusPengumuman = status;
+        _isLoadingStatus = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       body: SafeArea(
-        child: SingleChildScrollView( // ← INI YANG FIX OVERFLOW
+        child: SingleChildScrollView(
           child: Column(
             children: [
               // ══════════════════════════════════════
@@ -145,11 +172,10 @@ class AdminDashboardPage extends StatelessWidget {
                 ),
               ),
 
-              // Spacer diganti SizedBox biar ga error di ScrollView
               const SizedBox(height: 40),
 
               // ══════════════════════════════════════
-              // TOMBOL UMUMKAN HASIL VOTING (BIRU)
+              // TOMBOL UMUMKAN / SEMBUNYIKAN (DINAMIS)
               // ══════════════════════════════════════
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
@@ -158,16 +184,26 @@ class AdminDashboardPage extends StatelessWidget {
                   width: double.infinity,
                   height: 52,
                   child: ElevatedButton.icon(
-                    onPressed: () => _showAnnounceDialog(context),
+                    // Disable tombol sementara saat mengecek status awal
+                    onPressed: _isLoadingStatus ? null : () => _showAnnounceDialog(context),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0245A3),
+                      backgroundColor: _statusPengumuman == 'hidden' ? const Color(0xFF0245A3) : Colors.blueGrey,
+                      disabledBackgroundColor: Colors.grey,
                       elevation: 0,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     ),
-                    icon: const Icon(Icons.campaign_rounded, color: Colors.white, size: 20),
-                    label: const Text(
-                      'Umumkan Hasil Voting',
-                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: Colors.white),
+                    icon: _isLoadingStatus 
+                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        : Icon(
+                            _statusPengumuman == 'hidden' ? Icons.campaign_rounded : Icons.visibility_off_rounded,
+                            color: Colors.white, 
+                            size: 20
+                          ),
+                    label: Text(
+                      _isLoadingStatus 
+                          ? 'Memuat status...' 
+                          : (_statusPengumuman == 'hidden' ? 'Umumkan Hasil Voting' : 'Sembunyikan Hasil Dari User'),
+                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: Colors.white),
                     ),
                   ),
                 ),
@@ -270,7 +306,12 @@ class AdminDashboardPage extends StatelessWidget {
     );
   }
 
+  // ══════════════════════════════════════
+  // DIALOG KONFIRMASI (UDAH ADA API NYA)
+  // ══════════════════════════════════════
   void _showAnnounceDialog(BuildContext context) {
+    bool isHidden = _statusPengumuman == 'hidden';
+    
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -281,18 +322,24 @@ class AdminDashboardPage extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.campaign_rounded, color: Color(0xFF0245A3), size: 60),
+              Icon(
+                isHidden ? Icons.campaign_rounded : Icons.visibility_off_rounded, 
+                color: isHidden ? const Color(0xFF0245A3) : Colors.blueGrey, 
+                size: 60
+              ),
               const SizedBox(height: 16),
-              const Text(
-                'Umumkan Hasil Voting?',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 20, color: Color(0xFF141B34)),
+              Text(
+                isHidden ? 'Umumkan Hasil Voting?' : 'Sembunyikan Hasil Voting?',
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 20, color: Color(0xFF141B34)),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
-              const Text(
-                'Admin ingin mengumumkannya? Ini akan Mempublikasikan Hasil Voting!',
+              Text(
+                isHidden 
+                    ? 'Admin ingin mengumumkannya? Ini akan Mempublikasikan Hasil Voting!' 
+                    : 'Admin ingin menyembunyikannya? User tidak bisa melihat hasil voting lagi.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontWeight: FontWeight.w500, fontSize: 14, color: Color(0xFF6B7280)),
+                style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14, color: Color(0xFF6B7280)),
               ),
               const SizedBox(height: 24),
               Row(
@@ -316,16 +363,30 @@ class AdminDashboardPage extends StatelessWidget {
                     child: SizedBox(
                       height: 45,
                       child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          _showSuccessDialog(context);
+                        onPressed: () async {
+                          Navigator.pop(context); // Tutup dialog konfirmasi
+                          
+                          // 💡 KIRIM PERINTAH KE DATABASE
+                          String statusBaru = isHidden ? 'visible' : 'hidden';
+                          bool sukses = await ApiService.updateStatusPengumuman(statusBaru);
+                          
+                          if (sukses && mounted) {
+                            setState(() {
+                              _statusPengumuman = statusBaru; // Update tampilan tombol langsung
+                            });
+                            _showSuccessDialog(context, isHidden: isHidden);
+                          } else if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Gagal mengubah status pengumuman'), backgroundColor: Colors.red),
+                            );
+                          }
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0245A3),
+                          backgroundColor: isHidden ? const Color(0xFF0245A3) : Colors.blueGrey,
                           elevation: 0,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        child: const Text('Ya, Umumkan', style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white)),
+                        child: Text(isHidden ? 'Ya, Umumkan' : 'Ya, Sembunyikan', style: const TextStyle(fontWeight: FontWeight.w700, color: Colors.white)),
                       ),
                     ),
                   ),
@@ -338,7 +399,7 @@ class AdminDashboardPage extends StatelessWidget {
     );
   }
 
-  void _showSuccessDialog(BuildContext context) {
+  void _showSuccessDialog(BuildContext context, {required bool isHidden}) {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -356,10 +417,12 @@ class AdminDashboardPage extends StatelessWidget {
                 style: TextStyle(fontWeight: FontWeight.w700, fontSize: 20, color: Color(0xFF141B34)),
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Hasil voting telah berhasil dipublikas.',
+              Text(
+                isHidden 
+                    ? 'Hasil voting telah berhasil dipublikasikan.' 
+                    : 'Hasil voting telah berhasil disembunyikan.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontWeight: FontWeight.w500, fontSize: 14, color: Color(0xFF6B7280)),
+                style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14, color: Color(0xFF6B7280)),
               ),
               const SizedBox(height: 24),
               SizedBox(

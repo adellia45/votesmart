@@ -41,14 +41,29 @@ class _AdminHasilVotingScreenState extends State<AdminHasilVotingScreen>
   }
 
   Future<void> _fetchResults() async {
-    setState(() { _isLoading = true; _error = null; });
-    final pilketos = await ApiService.getHasilVoting('pilketos');
-    final pilketum = await ApiService.getHasilVoting('pilketum');
-    setState(() {
-      _pilketosResult = pilketos;
-      _pilketumResult = pilketum;
-      _isLoading = false;
+    setState(() { 
+      _isLoading = true; 
+      _error = null; 
     });
+    
+    try {
+      final pilketos = await ApiService.getHasilVoting('pilketos');
+      final pilketum = await ApiService.getHasilVoting('pilketum');
+      
+      setState(() {
+        _pilketosResult = pilketos;
+        _pilketumResult = pilketum;
+        if (_pilketosResult == null && _pilketumResult == null) {
+          _error = "Gagal mengambil data dari server";
+        }
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = "Terjadi kesalahan sistem";
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -180,7 +195,7 @@ class _AdminHasilVotingScreenState extends State<AdminHasilVotingScreen>
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
 
           // ── 2. PEROLEHAN SUARA (GRAFIK BATANG) ──
           Container(
@@ -257,7 +272,6 @@ class _AdminHasilVotingScreenState extends State<AdminHasilVotingScreen>
   }
 
   Widget _buildBarRow(VoteResultModel candidate, int totalSuara, Color itemColor) {
-    // DIPERBAIKI: Persentase dihitung dari TOTAL SUARA MASUK, bukan suara tertinggi
     double barPercent = totalSuara > 0 ? candidate.suara / totalSuara : 0.0;
 
     return Padding(
@@ -278,24 +292,27 @@ class _AdminHasilVotingScreenState extends State<AdminHasilVotingScreen>
             child: Stack(
               children: [
                 Container(height: 28, decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(8))),
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 600),
-                  height: 28,
-                  // DIPERBAIKI: Full width supaya proporsional (1.0 = 100%)
-                  width: MediaQuery.of(context).size.width * barPercent, 
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(colors: [itemColor, itemColor.withOpacity(0.7)]),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: barPercent > 0.15
-                      ? Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: Align(
-                            alignment: Alignment.centerRight,
-                            child: Text('${(barPercent * 100).toStringAsFixed(0)}%', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
-                          ),
-                        )
-                      : null,
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    return AnimatedContainer(
+                      duration: const Duration(milliseconds: 600),
+                      height: 28,
+                      width: constraints.maxWidth * barPercent, 
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(colors: [itemColor, itemColor.withOpacity(0.7)]),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: barPercent > 0.15
+                          ? Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: Align(
+                                alignment: Alignment.centerRight,
+                                child: Text('${(barPercent * 100).toStringAsFixed(0)}%', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+                              ),
+                            )
+                          : null,
+                    );
+                  }
                 ),
               ],
             ),
@@ -325,23 +342,32 @@ class _AdminHasilVotingScreenState extends State<AdminHasilVotingScreen>
     );
   }
 
+  // ── DIALOG UNTUK RESET VOTING ──
   void _showResetDialog(String kategori) {
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Reset Voting'),
-        content: Text('Apakah Anda yakin ingin mereset voting $kategori?'),
+        content: Text('Apakah Anda yakin ingin mereset voting $kategori? Seluruh data suara masuk pada kategori ini akan dihapus permanen.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Batal')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx), 
+            child: const Text('Batal')
+          ),
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(ctx);
+              setState(() { _isLoading = true; });
+              
               final success = await ApiService.resetVoting(kategori);
+              
               if (success && mounted) {
                 CommonWidgets.showSnackBar(context, 'Voting $kategori berhasil direset!');
                 _fetchResults();
               } else if (mounted) {
+                setState(() { _isLoading = false; });
                 CommonWidgets.showSnackBar(context, 'Gagal mereset voting', isError: true);
               }
             },
