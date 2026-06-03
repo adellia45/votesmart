@@ -1,60 +1,35 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:http/http.dart' as http;
-import 'profile_screen.dart';
-import 'package:votesmartk4/models/user_model.dart';
+import '../config/app_config.dart';
+import '../models/models.dart';
+import '../services/api_service.dart';
+import 'detail_kandidat_screen.dart';
 
 class KandidatScreen extends StatefulWidget {
-  final String title;
   final String kategori;
-  final UserModel user; // ← TAMBAHKAN INI
+  final UserModel user;
 
-  const KandidatScreen({
-    super.key,
-    required this.title,
-    required this.kategori,
-    required this.user, // ← TAMBAHKAN INI
-  });
+  const KandidatScreen({super.key, required this.kategori, required this.user});
 
   @override
   State<KandidatScreen> createState() => _KandidatScreenState();
 }
 
 class _KandidatScreenState extends State<KandidatScreen> {
-  List<Map<String, dynamic>> _kandidatList = [];
+  List<KandidatModel> _kandidatList = [];
   bool _isLoading = true;
-  String? _error;
-  final String _baseUrl = 'http://localhost:8080/latihanvotesmartk4_api';
 
   @override
   void initState() {
     super.initState();
-    _fetchKandidat();
+    _fetchData();
   }
 
-  Future<void> _fetchKandidat() async {
-    try {
-      final response = await http.get(
-        Uri.parse('$_baseUrl/get_kandidat.php?kategori=${widget.kategori}'),
-      );
-      final data = jsonDecode(response.body);
-
-      if (data['success']) {
-        setState(() {
-          _kandidatList = List<Map<String, dynamic>>.from(data['data']);
-        });
-      } else {
-        setState(() {
-          _error = data['message'] ?? 'Gagal memuat data';
-        });
-      }
-    } catch (e) {
+  Future<void> _fetchData() async {
+    final list = await ApiService.getKandidat(widget.kategori);
+    if (mounted) {
       setState(() {
-        _error = 'Gagal terhubung ke server';
-      });
-    } finally {
-      setState(() {
+        _kandidatList = list;
         _isLoading = false;
       });
     }
@@ -62,6 +37,8 @@ class _KandidatScreenState extends State<KandidatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    String title = widget.kategori == 'pilketos' ? 'Pemilihan Ketua OSIS' : 'Pemilihan Ketua MPK';
+    
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
@@ -69,13 +46,7 @@ class _KandidatScreenState extends State<KandidatScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-        title: Text(
-          widget.title,
-          style: GoogleFonts.inter(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        title: Text(title, style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w600)),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
           onPressed: () => Navigator.pop(context),
@@ -83,135 +54,222 @@ class _KandidatScreenState extends State<KandidatScreen> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: Color(0xFF0245A3)))
-          : _error != null
+          : _kandidatList.isEmpty
               ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.error_outline, size: 48, color: Colors.grey[400]),
-                      const SizedBox(height: 12),
-                      Text(_error!, style: GoogleFonts.inter(color: Colors.grey[600])),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: _fetchKandidat,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0245A3),
+                  child: Padding(
+                    padding: const EdgeInsets.all(40),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(color: const Color(0xFFDBEAFE), borderRadius: BorderRadius.circular(50)),
+                          child: const Icon(Icons.how_to_vote_rounded, size: 48, color: Color(0xFF0245A3)),
                         ),
-                        child: Text('Coba Lagi', style: GoogleFonts.inter(color: Colors.white)),
-                      ),
-                    ],
+                        const SizedBox(height: 20),
+                        Text('Belum ada calon', style: GoogleFonts.inter(fontSize: 16, color: Colors.grey[500], fontWeight: FontWeight.w600)),
+                      ],
+                    ),
                   ),
                 )
-              : ListView.separated(
-                  padding: const EdgeInsets.all(20),
+              : ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
                   itemCount: _kandidatList.length,
-                  separatorBuilder: (context, index) => const SizedBox(height: 16),
                   itemBuilder: (context, index) {
-                    final kandidat = _kandidatList[index];
-                    return _buildKandidatCard(context, kandidat);
+                    return _buildCalonCard(_kandidatList[index], index + 1);
                   },
                 ),
     );
   }
 
-  Widget _buildKandidatCard(BuildContext context, Map<String, dynamic> kandidat) {
-    final profileTitle = widget.kategori == 'pilketos'
-        ? 'Profile Calon Ketos'
-        : 'Profile Calon Ketum';
-
+  Widget _buildCalonCard(KandidatModel calon, int noUrut) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+          BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 12, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(18),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => DetailKandidatScreen(
+                  title: 'Profile Calon ${widget.kategori == 'pilketos' ? 'Ketos' : 'Ketum'}',
+                  kandidat: calon,
+                  canVote: true,
+                                  onVotePressed: () async {
+                  // 1. Panggil API Voting
+                  bool success = await ApiService.submitVote(
+                    widget.user.id,
+                    calon.id,
+                    widget.kategori,
+                  );
+
+                  if (success && mounted) {
+                    // 2. Pop dari halaman Detail Calon
+                    Navigator.pop(context);
+                    
+                    // 3. Pop dari halaman Daftar Calon (Balik ke menu Pilih Voting)
+                    Navigator.pop(context);
+
+                    // Opsional: Tampilkan snackbar berhasil
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Berhasil memilih calon!'),
+                        backgroundColor: Color(0xFF059669),
+                      ),
+                    );
+                  } else if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Gagal melakukan voting'),
+                        backgroundColor: Color(0xFFEF4444),
+                      ),
+                    );
+                  }
+                },
+                ),
+              ),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Foto
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: calon.foto != null && calon.foto!.isNotEmpty
+                      ? Image.network(calon.foto!, width: 68, height: 85, fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => _buildDefaultAvatar(calon, noUrut))
+                      : _buildDefaultAvatar(calon, noUrut),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      // No. Urut + Nama
+      Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 8,
+              vertical: 3,
+            ),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0245A3).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              'No. $noUrut',
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.w800,
+                fontSize: 11,
+                color: const Color(0xFF0245A3),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+
+          Expanded(
+            child: Text(
+              calon.nama,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.w700,
+                fontSize: 15,
+                color: const Color(0xFF141B34),
+              ),
+            ),
           ),
         ],
       ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(50),
-            child: Image.asset(
-              'assets/images/kandidat1.png', // fallback
-              width: 60,
-              height: 60,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                return Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE3EBF6),
-                    borderRadius: BorderRadius.circular(50),
-                  ),
-                  child: Icon(
-                    Icons.person,
-                    size: 32,
-                    color: const Color(0xFF0245A3).withOpacity(0.5),
-                  ),
-                );
-              },
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Text(
-              kandidat["nama"],
-              style: GoogleFonts.inter(
-                color: const Color(0xFF1A1A2E),
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          SizedBox(
-            height: 38,
-            child: ElevatedButton(
-              onPressed: () async {
-                final result = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ProfileScreen(
-                      title: profileTitle,
-                      kandidatId: kandidat["id"],
-                      nama: kandidat["nama"],
-                      visi: kandidat["visi"],
-                      misi: List<String>.from(kandidat["misi"]),
-                      kategori: widget.kategori,
-                      user: widget.user, // ← TAMBAHKAN INI
-                    ),
-                  ),
-                );
 
-                // Kalau user sudah voting, pop kandidat screen juga
-                if (result != null && result['voted'] == true) {
-                  if (!mounted) return;
-                  Navigator.pop(context, result);
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0245A3),
-                foregroundColor: Colors.white,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: Text(
-                'Lihat Profile',
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
+      const SizedBox(height: 8),
+
+      // Visi Singkat
+      Text(
+        calon.visi,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        style: GoogleFonts.inter(
+          fontSize: 12,
+          color: const Color(0xFF6B7280),
+          height: 1.4,
+        ),
+      ),
+
+      const SizedBox(height: 10),
+
+      // Badge Misi
+      Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 10,
+          vertical: 5,
+        ),
+        decoration: BoxDecoration(
+          color: const Color(0xFFDCFCE7),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.format_list_bulleted_rounded,
+              size: 12,
+              color: Color(0xFF16A34A),
+            ),
+            const SizedBox(width: 5),
+            Text(
+              '${calon.misi.length} Misi',
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.w700,
+                fontSize: 11,
+                color: const Color(0xFF16A34A),
               ),
             ),
+          ],
+        ),
+      ),
+    ],
+  ),
+),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDefaultAvatar(KandidatModel calon, int noUrut) {
+    return Container(
+      width: 68,
+      height: 85,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(colors: [Color(0xFF0245A3), Color(0xFF0369D1)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(calon.nama.isNotEmpty ? calon.nama[0].toUpperCase() : '?', style: GoogleFonts.inter(fontSize: 22, fontWeight: FontWeight.w800, color: Colors.white)),
+          const SizedBox(height: 2),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(6)),
+            child: Text('$noUrut', style: GoogleFonts.inter(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white)),
           ),
         ],
       ),

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:votesmartk4/models/user_model.dart';
-import 'my_profile_screen.dart';
+import '../config/app_config.dart';
+import '../models/models.dart';
 import 'pilih_voting_screen.dart';
+import 'my_profile_screen.dart';
 
 class ThankYouScreen extends StatelessWidget {
   final String kategoriLabel;
@@ -26,53 +27,26 @@ class ThankYouScreen extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF01367A),
-              Color(0xFF0245A3),
-              Color(0xFF0355C4),
-            ],
+            colors: [Color(0xFF01367A), Color(0xFF0245A3), Color(0xFF0355C4)],
           ),
         ),
         child: SafeArea(
           child: Column(
             children: [
               const SizedBox(height: 60),
-
-              // Ikon centang
               Container(
                 width: 90,
                 height: 90,
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.15),
                   shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.3),
-                    width: 3,
-                  ),
+                  border: Border.all(color: Colors.white.withOpacity(0.3), width: 3),
                 ),
-                child: const Icon(
-                  Icons.check_rounded,
-                  size: 50,
-                  color: Colors.white,
-                ),
+                child: const Icon(Icons.check_rounded, size: 50, color: Colors.white),
               ),
-
               const SizedBox(height: 28),
-
-              // Judul
-              Text(
-                'Terima Kasih!',
-                style: GoogleFonts.inter(
-                  color: Colors.white,
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
-                ),
-              ),
-
+              Text('Terima Kasih!', style: GoogleFonts.inter(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold, letterSpacing: 0.5)),
               const SizedBox(height: 28),
-
-              // Detail voting
               Container(
                 width: double.infinity,
                 margin: const EdgeInsets.symmetric(horizontal: 32),
@@ -80,50 +54,27 @@ class ThankYouScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.2),
-                    width: 1,
-                  ),
+                  border: Border.all(color: Colors.white.withOpacity(0.2), width: 1),
                 ),
                 child: Column(
                   children: [
-                    _buildDetailRow(
-                      label: 'Kamu memilih:',
-                      value: kategoriLabel,
-                    ),
+                    _buildDetailRow(label: 'Kamu memilih:', value: kategoriLabel),
                     const Divider(color: Colors.white24, height: 24),
-                    _buildDetailRow(
-                      label: 'Nama:',
-                      value: namaKandidat,
-                    ),
+                    _buildDetailRow(label: 'Nama:', value: namaKandidat),
                     const Divider(color: Colors.white24, height: 24),
-                    Row(
+                    const Row(
                       children: [
-                        Icon(
-                          Icons.verified_rounded,
-                          color: Colors.greenAccent,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 10),
+                        Icon(Icons.verified_rounded, color: Colors.greenAccent, size: 20),
+                        SizedBox(width: 10),
                         Expanded(
-                          child: Text(
-                            'Suara kamu sudah tercatat',
-                            style: GoogleFonts.inter(
-                              color: Colors.greenAccent,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
+                          child: Text('Suara kamu sudah tercatat', style: TextStyle(color: Colors.greenAccent, fontSize: 14, fontWeight: FontWeight.w500)),
                         ),
                       ],
                     ),
                   ],
                 ),
               ),
-
               const Spacer(),
-
-              // Tombol Kembali ke Menu
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 32),
                 child: SizedBox(
@@ -131,36 +82,22 @@ class ThankYouScreen extends StatelessWidget {
                   height: 52,
                   child: ElevatedButton(
                     onPressed: () {
-                      // Pop sampai ke Pilih Voting
                       Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(
-                          builder: (context) => PilihVotingScreen(user: user),
-                        ),
+                        MaterialPageRoute(builder: (context) => PilihVotingScreen(user: user)),
                         (route) => route.isFirst,
                       );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
-                      foregroundColor: const Color(0xFF0245A3),
+                      foregroundColor: AppColors.primary,
                       elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     ),
-                    child: Text(
-                      'Kembali ke Menu',
-                      style: GoogleFonts.inter(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    child: Text('Kembali ke Menu', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.bold)),
                   ),
                 ),
               ),
-
               const SizedBox(height: 14),
-
-              // Tombol Lihat Profile Saya
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 32),
                 child: SizedBox(
@@ -168,34 +105,17 @@ class ThankYouScreen extends StatelessWidget {
                   height: 52,
                   child: OutlinedButton(
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => MyProfileScreen(user: user),
-                        ),
-                      );
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => MyProfileScreen(user: user)));
                     },
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.white,
-                      side: BorderSide(
-                        color: Colors.white.withOpacity(0.4),
-                        width: 1.5,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
+                      side: BorderSide(color: Colors.white.withOpacity(0.4), width: 1.5),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     ),
-                    child: Text(
-                      'Lihat Profile Saya',
-                      style: GoogleFonts.inter(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    child: Text('Lihat Profile Saya', style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w600)),
                   ),
                 ),
               ),
-
               const SizedBox(height: 32),
             ],
           ),
@@ -208,26 +128,8 @@ class ThankYouScreen extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          width: 120,
-          child: Text(
-            label,
-            style: GoogleFonts.inter(
-              color: Colors.white.withOpacity(0.6),
-              fontSize: 14,
-            ),
-          ),
-        ),
-        Expanded(
-          child: Text(
-            value,
-            style: GoogleFonts.inter(
-              color: Colors.white,
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
+        SizedBox(width: 120, child: Text(label, style: GoogleFonts.inter(color: Colors.white.withOpacity(0.6), fontSize: 14))),
+        Expanded(child: Text(value, style: GoogleFonts.inter(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600))),
       ],
     );
   }

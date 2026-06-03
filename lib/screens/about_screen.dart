@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../config/app_config.dart';
 
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
@@ -7,9 +8,9 @@ class AboutScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0245A3),
+        backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
@@ -31,7 +32,7 @@ class AboutScreen extends StatelessWidget {
           children: [
             const SizedBox(height: 20),
 
-            // Logo & Nama App
+            // ── Logo & Nama App ──
             Container(
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
@@ -48,7 +49,7 @@ class AboutScreen extends StatelessWidget {
               child: Column(
                 children: [
                   Image.asset(
-                    'assets/images/logo_smk4.png',
+                    'assets/images/logo_smkn4.png',
                     width: 80,
                     height: 80,
                     errorBuilder: (context, error, stackTrace) {
@@ -59,7 +60,7 @@ class AboutScreen extends StatelessWidget {
                           color: const Color(0xFFE3EBF6),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.school, size: 40, color: Color(0xFF0245A3)),
+                        child: const Icon(Icons.school, size: 40, color: AppColors.primary),
                       );
                     },
                   ),
@@ -67,7 +68,7 @@ class AboutScreen extends StatelessWidget {
                   Text(
                     'VoteSmartK4',
                     style: GoogleFonts.inter(
-                      color: const Color(0xFF0245A3),
+                      color: AppColors.primary,
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 0.5,
@@ -91,7 +92,7 @@ class AboutScreen extends StatelessWidget {
                     child: Text(
                       'Versi 1.0.0',
                       style: GoogleFonts.inter(
-                        color: const Color(0xFF0245A3),
+                        color: AppColors.primary,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -103,7 +104,7 @@ class AboutScreen extends StatelessWidget {
 
             const SizedBox(height: 24),
 
-            // Tim Penyumbang
+            // ── Tim Penyumbang ──
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(20),
@@ -123,12 +124,12 @@ class AboutScreen extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.groups_rounded, color: const Color(0xFF0245A3).withOpacity(0.7), size: 20),
+                      Icon(Icons.groups_rounded, color: AppColors.primary.withOpacity(0.7), size: 20),
                       const SizedBox(width: 10),
                       Text(
-                        'Tim Penyumbang',
+                        'Tim Pengembang',
                         style: GoogleFonts.inter(
-                          color: const Color(0xFF0245A3),
+                          color: AppColors.primary,
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
@@ -138,33 +139,32 @@ class AboutScreen extends StatelessWidget {
                   const Divider(height: 24, color: Color(0xFFE3EBF6)),
                   
                   _buildTeamMember(
-                    name: 'Adellia Indra',
-                    role: 'Flutter Developer',
-                    email: 'adellia.smk4@sch.id',
-                    github: 'github.com/adelliaindra',
-                    linkedin: 'linkedin.com/in/adelliaindra',
-                  ),
-                  _buildTeamMember(
-                    name: 'Nama Anggota 2',
-                    role: 'UI/UX Designer',
-                    email: 'anggota2.smk4@sch.id',
-                    github: 'github.com/anggota2',
-                    linkedin: 'linkedin.com/in/anggota3',
-                  ),
-                  _buildTeamMember(
-                    name: 'Nama Anggota 3',
-                    role: 'Backend Developer',
-                    email: 'anggota3.smk4@sch.id',
-                    github: 'github.com/anggota3',
-                    linkedin: 'linkedin.com/in/anggota3',
-                  ),
+  name: 'Aulia Juliana',
+  role: 'Flutter Developer',
+  email: 'auliajuliana378@gmail.com',
+  github: 'github.com/auliaa378',
+),
+
+_buildTeamMember(
+  name: 'Alsya Juliana Rizki',
+  role: 'UI/UX Designer',
+  email: 'alsyajulianarizki@gmail.com',
+  github: 'github.com/alsyajulian',
+),
+
+_buildTeamMember(
+  name: 'Adellia Indra',
+  role: 'Backend Developer',
+  email: 'adelliaindra0@gmail.com',
+  github: 'github.com/adellia45',
+),
                 ],
               ),
             ),
 
             const SizedBox(height: 24),
 
-            // Copyright
+            // ── Copyright ──
             Text(
               '© 2026 SMK Negeri 4 Bogor\nSemua hak dilindungi.',
               textAlign: TextAlign.center,
@@ -181,12 +181,12 @@ class AboutScreen extends StatelessWidget {
     );
   }
 
-   Widget _buildTeamMember({
+  // Widget untuk kartu anggota tim
+  Widget _buildTeamMember({
     required String name,
     required String role,
     required String email,
     required String github,
-    String? linkedin, // opsional
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -202,130 +202,80 @@ class AboutScreen extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Avatar
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: const Color(0xFF0245A3).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(
-              Icons.person_rounded,
-              size: 26,
-              color: Color(0xFF0245A3),
-            ),
-          ),
+// Avatar Icon
+Container(
+  width: 48,
+  height: 48,
+  decoration: BoxDecoration(
+    color: AppColors.primary.withOpacity(0.1),
+    borderRadius: BorderRadius.circular(12),
+  ),
+  child: const Icon(
+    Icons.person_rounded,
+    size: 26,
+    color: AppColors.primary,
+  ),
+),
 
           const SizedBox(width: 14),
 
-          // Info
+          // Info Detail
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Nama
                 Text(
                   name,
                   style: GoogleFonts.inter(
-                    color: const Color(0xFF1A1A2E),
+                    color: AppColors.textPrimary,
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-
                 const SizedBox(height: 4),
-
-                // Role
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0245A3).withOpacity(0.08),
+                    color: AppColors.primary.withOpacity(0.08),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
                     role,
                     style: GoogleFonts.inter(
-                      color: const Color(0xFF0245A3),
+                      color: AppColors.primary,
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 10),
-
-                // Email
                 Row(
                   children: [
-                    Icon(
-                      Icons.email_outlined,
-                      size: 14,
-                      color: Colors.grey[500],
-                    ),
+                    Icon(Icons.email_outlined, size: 14, color: Colors.grey[500]),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
                         email,
-                        style: GoogleFonts.inter(
-                          color: Colors.grey[600],
-                          fontSize: 12,
-                        ),
+                        style: GoogleFonts.inter(color: Colors.grey[600], fontSize: 12),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
                 ),
-
                 const SizedBox(height: 6),
-
-                // GitHub
                 Row(
                   children: [
-                    // Icon GitHub sederhana (karena gak ada package, pakai code icon)
-                    Icon(
-                      Icons.code,
-                      size: 14,
-                      color: Colors.grey[500],
-                    ),
+                    Icon(Icons.code, size: 14, color: Colors.grey[500]),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
                         github,
-                        style: GoogleFonts.inter(
-                          color: Colors.grey[600],
-                          fontSize: 12,
-                        ),
+                        style: GoogleFonts.inter(color: Colors.grey[600], fontSize: 12),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
                 ),
-
-                // LinkedIn (kalau ada)
-                if (linkedin != null && linkedin.isNotEmpty) ...[
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.link_rounded,
-                        size: 14,
-                        color: Colors.grey[500],
-                      ),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(
-                          linkedin,
-                          style: GoogleFonts.inter(
-                            color: Colors.grey[600],
-                            fontSize: 12,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
               ],
             ),
           ),
